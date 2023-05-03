@@ -6,7 +6,7 @@ use App\Models\Master\Deliverable;
 use App\Models\Master\TaskType;
 use App\Models\Master\Team;
 use App\Models\Master\TicketReason;
-use GuzzleHttp\Promise\TaskQueue;
+use App\Models\Project\Project;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +15,22 @@ class User extends Model
 {
     use HasFactory;
     protected $guard = [];
+
+    # Scopes
+
+    // scope to get only active users
+    public function scopeActive($query): void
+    {
+        $query->where('account_status', 'active');
+    }
+
+    // scope for  dynamic type user
+    public function scopeOfType($query, $type = "inactive")
+    {
+        $query->where('account_status', "=", $type);
+    }
+
+    # Reletionships with teams
 
     public function createdTeams(): HasMany
     {
@@ -34,5 +50,10 @@ class User extends Model
     public function createdTaskType(): HasMany
     {
         return $this->hasMany(TaskType::class);
+    }
+
+    public function createdProjects(): HasMany
+    {
+        return $this->hasMany(Project::class);
     }
 }
