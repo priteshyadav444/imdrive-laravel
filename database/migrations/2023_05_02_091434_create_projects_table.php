@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('task_types', function (Blueprint $table) {
+        Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->string("name", 60);
             $table->unsignedBigInteger("user_id");
+            $table->foreign("user_id")->references("id")->on("users")->comment("User Id of Project Creator");
+            $table->string("logo_url", 100);
+            $table->string("name", 60);
+            $table->string("description");
             $table->enum("status", ['active', 'inactive']);
-            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");;
+            $table->enum("is_archive", ['true', 'false']);
             $table->timestamps();
         });
     }
@@ -26,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('task_types');
+        Schema::dropIfExists('projects');
     }
 };

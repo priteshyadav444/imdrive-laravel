@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email', 100);
             $table->string('password', 100);
             $table->string('description', 100);
-            $table->enum('account_status', ['active', 'inactive']);
+            $table->enum('account_status', ['active', 'inactive'])->default("active");
             $table->timestamps();
         });
     }

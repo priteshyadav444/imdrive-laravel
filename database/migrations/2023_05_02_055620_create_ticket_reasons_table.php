@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string("name", 60);
             $table->enum("status", ['active', 'inactive']);
-            $table->unsignedBigInteger("created_by_user_id");
-            $table->foreign("created_by_user_id")->references("id")->on("users")->onDelete("cascade");;
+            $table->unsignedBigInteger("user_id");
+            $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");;
             $table->timestamps();
         });
     }
