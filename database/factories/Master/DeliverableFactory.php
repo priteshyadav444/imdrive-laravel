@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Master;
 
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +18,8 @@ class DeliverableFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->name(),
+            'user_id' => $this->faker->randomElement(User::pluck('id'))
         ];
     }
 }
