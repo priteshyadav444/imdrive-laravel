@@ -18,21 +18,21 @@ class User extends Model
 
     public function createdTeams(): HasMany
     {
-        return $this->hasMany(Team::class, 'created_by_user_id', 'id');
+        return $this->hasMany(Team::class);
     }
 
     public function createdDeliverable(): HasMany
     {
-        return $this->hasMany(Deliverable::class, 'created_by_user_id', 'id');
+        return $this->hasMany(Deliverable::class);
     }
 
     public function createdTicketReason(): HasMany
     {
-        return $this->hasMany(TicketReason::class, 'created_by_user_id', 'id');
+        return $this->hasMany(TicketReason::class);
     }
 
     public function createdTaskType(): HasMany
     {
-        return $this->hasMany(TaskType::class, 'created_by_user_id', 'id');
+        return $this->hasMany(TaskType::class);
     }
 }
