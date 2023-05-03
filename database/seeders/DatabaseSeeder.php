@@ -20,14 +20,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(100)->create();
-        Team::factory(5)->create();
-        Deliverable::factory(5)->create();
-        Project::factory(5)->create();
+        // User::factory(100)->create();
+        // Team::factory(5)->create();
+        // Deliverable::factory(5)->create();
+        // Project::factory(5)->create();
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // User::factory()->count(2)->has(Project::factory(10), 'createdProjects')->create();
+        User::factory()->count(2)->hasCreatedProjects(3, function ($attributes, User $user) {
+            return ['name' => fake()->word() . " - By " . $user->firstname];
+        })->create();
     }
 }
