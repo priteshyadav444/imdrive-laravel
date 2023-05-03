@@ -12,6 +12,6 @@ class Team extends Model
     use HasFactory;
     public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by_user_id', 'id');
+        return $this->belongsTo(User::class);
     }
 }
