@@ -26,8 +26,10 @@ class DatabaseSeeder extends Seeder
         // Project::factory(5)->create();
 
         // User::factory()->count(2)->has(Project::factory(10), 'createdProjects')->create();
-        User::factory()->count(2)->hasCreatedProjects(3, function ($attributes, User $user) {
-            return ['name' => fake()->word() . " - By " . $user->firstname];
-        })->create();
+
+
+        // User::factory()->count(2)->hasCreatedProjects(3, function ($attributes, User $user) {
+        //     return ['name' => fake()->word() . " - By " . $user->firstname];
+        // })->create();
     }
 }

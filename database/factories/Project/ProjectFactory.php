@@ -18,7 +18,7 @@ class ProjectFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'name' => fake()->word(),
             'user_id' => fake()->randomElement(User::pluck('id')),
             'logo_url' => fake()->url(),
             'description' => fake()->paragraph(1, false),

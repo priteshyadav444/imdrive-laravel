@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('firstname', 60);
             $table->string('lastname', 60);
-            $table->string('email', 100);
+            $table->string('email', 100)->unique();
             $table->string('password', 100);
-            $table->string('description', 100);
+            $table->string('description', 100)->nullable();
             $table->enum('account_status', ['active', 'inactive'])->default("active");
             $table->timestamps();
         });

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger("user_id");
-            $table->foreign("user_id")->references("id")->on("users")->comment("User Id of Project Creator");
+            $table->foreign("user_id")->references("id")->on("users");
             $table->string("logo_url", 100);
             $table->string("name", 60);
             $table->string("description");
