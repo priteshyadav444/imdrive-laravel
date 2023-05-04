@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class User extends Model
 {
     use HasFactory;
-    protected $guard = [];
+
+    protected $guarded = ['created_at', 'updated_at', 'id', 'account_status'];
 
     # Scopes
 
