@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\User\User;
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\Rule as ValidationRule;
 use Illuminate\Validation\Validator;
+use Throwable;
 
 class UserController extends Controller
 {
@@ -22,16 +25,20 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = $this->validator($request->all());
+        try {
+            $validator = $this->validateInput($request->all());
 
-        if ($validator->fails()) {
-            return response()->json($this->payloadFormat(400, "Validation Failed", $validator->errors()), 400);
+            if ($validator->fails()) {
+                return response()->json($this->payloadFormat(400, "Validation Failed!", $validator->errors()), 400);
+            }
+
+            $user = new User();
+            $user::create($request->input());
+
+            return response()->json($this->payloadFormat(201, "User created successfully!", $request->all()), 201);
+        } catch (Throwable $th) {
+            return response()->json($this->payloadFormat(400, "Something went wrong", ["error" => $th->errorInfo]), 400);
         }
-
-        $user = new User();
-        $user::create($request->all());
-
-        return response()->json($this->payloadFormat(201, "User Created Successfully", ["user" => $request->all()]), 201);
     }
 
 
@@ -39,17 +46,24 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show($id)
     {
-        //
+        return User::find($id);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
-        //
+        $validator = $this->validateInput($request->input(), $id);
+        if ($validator->fails()) {
+            return response()->json($this->payloadFormat(400, "Validation failed",  $validator->errors()), 400);
+        }
+
+        $user = User::find($id);
+        $user->update($request->input());
+        return response()->json($this->payloadFormat(200, "User updated successfully!", $request->input()), 200);
     }
 
     /**
@@ -60,7 +74,7 @@ class UserController extends Controller
         //
     }
 
-    private function payloadFormat($status, $message, $data)
+    private function payloadFormat($status, $message, $data = null)
     {
         $response = [
             "status" => $status,
@@ -70,12 +84,12 @@ class UserController extends Controller
         return $response;
     }
 
-    private function validator($data = [])
+    private function validateInput($data = [], $id = "")
     {
         return validator($data, [
             'firstname' => 'required|string|max:60',
             'lastname' => 'required|string|max:60',
-            'email' => 'required|email|max:100|unique:users',
+            'email' => 'unique:users,email,' . $id,
             'password' => 'required|max:100',
             'description' => 'max:100',
         ]);
