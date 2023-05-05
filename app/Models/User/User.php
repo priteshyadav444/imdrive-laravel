@@ -10,12 +10,19 @@ use App\Models\Project\Project;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Passport\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+
+
 
 class User extends Model
+
 {
-    use HasFactory;
+    use HasFactory, HasApiTokens, Notifiable;
 
     protected $guarded = ['created_at', 'updated_at', 'id', 'account_status'];
+    protected $apppend = ['fullname'];
+    protected $guard = "user";
 
     # Scopes
 
@@ -56,5 +63,14 @@ class User extends Model
     public function createdProjects(): HasMany
     {
         return $this->hasMany(Project::class);
+    }
+    /**
+     * getFullNameAttribute : attributes method return full name
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return $this->firstname . " " . $this->lastname;
     }
 }

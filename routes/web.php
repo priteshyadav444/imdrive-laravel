@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::get('/', function () {
+Route::get('/', function () {
+
+    dd(User::first()->fullname);
     // $teams = User::find(2)->createdTeams->toArray();
     // dd($teams);
     // foreach ($teams as $team) {
@@ -78,7 +80,7 @@ use Illuminate\Support\Facades\Route;
     // dd(DB::last_query());
 
 
-//     $user = User::OfType()->get()->toArray();
-//     dd($user);
-//     return $user;
-// });
+    //     $user = User::OfType()->get()->toArray();
+    //     dd($user);
+    //     return $user;
+});

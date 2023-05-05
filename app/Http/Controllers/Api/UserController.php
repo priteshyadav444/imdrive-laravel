@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Models\User\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Throwable;
 
 class UserController extends Controller
@@ -14,7 +16,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        return response()->json($this->payloadFormat(200, "All users lists", $this->getAllUser()), 200);
+        return Response($this->payloadFormat(200, "All users lists", $this->getAllUser()), 200);
     }
 
     /**
@@ -25,15 +27,23 @@ class UserController extends Controller
         try {
             $payload = $request->input();
             $validator = $this->validateInput($payload);
-            if ($validator->fails()) {
-                return response()->json($this->payloadFormat(400, "Validation Failed!", $validator->errors()), 400);
-            }
+            if ($validator->fails())
+                return Response($this->payloadFormat(400, "Validation Failed!", $validator->errors()), 400);
 
+            // hashing password
+            $payload['password'] = Hash::make($request->input('password'));
+            // creating User 
             $user = new User();
             $payload["id"] = $user->create($payload)->id;
-            return response()->json($this->payloadFormat(201, "User created successfully!", $payload), 201);
+            // $user = Auth::user();
+            //generating token
+
+            $payload['token'] = $user->createToken("authToken")->accessToken;
+            unset($payload['password']);
+
+            return Response($this->payloadFormat(201, "User created successfully!", $payload), 201);
         } catch (Throwable $th) {
-            return response()->json($this->payloadFormat(400, "Something went wrong", ["error" => $th]), 400);
+            return Response($this->payloadFormat(400, "Something went wrong", ["error" => $th]), 400);
         }
     }
 
@@ -44,11 +54,16 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = $this->getUserById($id);
-        if (!$user) {
-            return response()->json($this->payloadFormat(404, "User not found", []), 404);
+        // $user = Auth::guard('api')->check();
+        // dd($user);
+        if ($id) {
+            $user = $this->getUserById($id);
+            if (!$user) {
+                return Response($this->payloadFormat(404, "User nPuot found", []), 404);
+            }
+            return Response($this->payloadFormat(200, "User found!", $user), 200);
         }
-        return response()->json($this->payloadFormat(200, "User found!", $user), 200);
+        return Response($this->payloadFormat(401, "Unauthenticated Request!",), 401);
     }
 
     /**
@@ -59,16 +74,16 @@ class UserController extends Controller
         $payload = $request->input();
         $validator = $this->validateInput($payload, $id);
         if ($validator->fails()) {
-            return response()->json($this->payloadFormat(400, "Validation failed!",  $validator->errors()), 400);
+            return Response($this->payloadFormat(400, "Validation failed!",  $validator->errors()), 400);
         }
 
         $user = $this->getUserById($id);
         if (!$user) {
-            return response()->json($this->payloadFormat(404, "User not found!", $id), 404);
+            return Response($this->payloadFormat(404, "User not found!", $id), 404);
         }
         $user->update($payload);
         $payload['id'] = $id;
-        return response()->json($this->payloadFormat(200, "User updated successfully!", $payload), 200);
+        return Response($this->payloadFormat(200, "User updated successfully!", $payload), 200);
     }
 
     /**
@@ -78,11 +93,25 @@ class UserController extends Controller
     {
         $user = $this->getUserById($id);
         if (!$user) {
-            return response()->json($this->payloadFormat(404, "User Not Found!", $id), 404);
+            return Response($this->payloadFormat(404, "User Not Found!", $id), 404);
         }
         $user->account_status = "inactive";
         $user->save();
-        return response()->json($this->payloadFormat(200, "User deleted successfully!", $id), 200);
+        return Response($this->payloadFormat(200, "User deleted successfully!", $id), 200);
+    }
+
+    public function login($id)
+    {
+        $user = $this->getUserById(39);
+        if (!$user) {
+            return Response($this->payloadFormat(404, "User Not Found!", $id), 404);
+        }
+
+        // Creating a token without scopes...
+        $token = $user->createToken('accessToken')->accessToken;
+        $payload = $user;
+        $payload['token'] = $token;
+        return Response($this->payloadFormat(200, [$user, 'token' => $token]), 200);
     }
 
     private function payloadFormat($status, $message, $data = null)
@@ -92,6 +121,7 @@ class UserController extends Controller
             "message" => $message,
             "data" => $data
         ];
+        if ($data == null) unset($response['data']);
         return $response;
     }
 
@@ -108,12 +138,31 @@ class UserController extends Controller
 
     private function getUserById($id, $accountStatus = "active")
     {
-        return $user = User::ofType($accountStatus)->find($id);
+        return User::ofType($accountStatus)->find($id);
     }
 
     private function getAllUser($accountStatus = "active")
     {
-        return $user = User::ofType($accountStatus)->get();
-        User::active()->get();
+        return User::ofType($accountStatus)->get();
     }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    // public function login(Request $request)
+    // {
+    //     try {
+    //         $payload = $request->input();
+    //         $validator = $this->validateInput($payload);
+    //         if ($validator->fails()) {
+    //             return Response($this->payloadFormat(400, "Validation Failed!", $validator->errors()), 400);
+    //         }
+
+    //         $user = new User();
+    //         $payload["id"] = $user->create($payload)->id;
+    //         return Response($this->payloadFormat(201, "User created successfully!", $payload), 201);
+    //     } catch (Throwable $th) {
+    //         return Response($this->payloadFormat(400, "Something went wrong", ["error" => $th]), 400);
+    //     }
+    // }
 }
