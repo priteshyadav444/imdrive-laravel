@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\storeUserRequest;
 use App\Models\User\User;
+use App\Traits\HttpResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -11,41 +13,42 @@ use Throwable;
 
 class UserController extends Controller
 {
+    use HttpResponse;
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return Response($this->payloadFormat(200, "All users lists", $this->getAllUser()), 200);
+        return $this->success($this->getAllUser(), "All users lists", 200);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        try {
-            $payload = $request->input();
-            $validator = $this->validateInput($payload);
-            if ($validator->fails())
-                return Response($this->payloadFormat(400, "Validation Failed!", $validator->errors()), 400);
+    // public function store(Request $request)
+    // {
+    //     try {
+    //         $payload = $request->input();
+    //         $validator = $this->validateInput($payload);
+    //         if ($validator->fails())
+    //             return Response($this->payloadFormat(400, "Validation Failed!", $validator->errors()), 400);
 
-            // hashing password
-            $payload['password'] = Hash::make($request->input('password'));
-            // creating User 
-            $user = new User();
-            $payload["id"] = $user->create($payload)->id;
-            // $user = Auth::user();
-            //generating token
+    //         // hashing password
+    //         $payload['password'] = Hash::make($request->input('password'));
+    //         // creating User 
+    //         $user = new User();
+    //         $payload["id"] = $user->create($payload)->id;
+    //         // $user = Auth::user();
+    //         //generating token
 
-            $payload['token'] = $user->createToken("authToken")->accessToken;
-            unset($payload['password']);
+    //         $payload['token'] = $user->createToken("authToken")->accessToken;
+    //         unset($payload['password']);
 
-            return Response($this->payloadFormat(201, "User created successfully!", $payload), 201);
-        } catch (Throwable $th) {
-            return Response($this->payloadFormat(400, "Something went wrong", ["error" => $th]), 400);
-        }
-    }
+    //         return Response($this->payloadFormat(201, "User created successfully!", $payload), 201);
+    //     } catch (Throwable $th) {
+    //         return Response($this->payloadFormat(400, "Something went wrong", ["error" => $th]), 400);
+    //     }
+    // }
 
 
 
@@ -100,18 +103,32 @@ class UserController extends Controller
         return Response($this->payloadFormat(200, "User deleted successfully!", $id), 200);
     }
 
-    public function login($id)
+    public function login(Request $request)
     {
-        $user = $this->getUserById(39);
-        if (!$user) {
-            return Response($this->payloadFormat(404, "User Not Found!", $id), 404);
+
+        $validator = $this->validateLoginInput($request->only('email', 'password'));
+        // validating input
+        if ($validator->fails()) {
+            return Response($this->payloadFormat(400, "Validation Failed!", $validator->errors()), 400);
         }
 
-        // Creating a token without scopes...
-        $token = $user->createToken('accessToken')->accessToken;
-        $payload = $user;
-        $payload['token'] = $token;
-        return Response($this->payloadFormat(200, [$user, 'token' => $token]), 200);
+        ['email' => $email, 'password' => $password] = $request->only('email', 'password');
+
+
+        // checking is user exists or not
+        if (!$this->getUserByEmail($email)) {
+            return Response($this->payloadFormat(404, "User Not Found!. Enter Registered Email", compact('email')), 404);
+        }
+
+        // checking user credentials
+        if (Auth::attempt(compact('email', 'password'))) {
+            $user = Auth::user();
+            $user['token'] = $user->createToken('accessToken')->plainTextToken;
+            unset($user['password'], $user['account_status']);
+            return Response($this->payloadFormat(200, "User Logged In Successfully!", [$user]), 200);
+        }
+
+        return Response($this->payloadFormat(400, "Password Mismatch!", ['email' => $email]), 400);
     }
 
     private function payloadFormat($status, $message, $data = null)
@@ -125,9 +142,9 @@ class UserController extends Controller
         return $response;
     }
 
-    private function validateInput($data = [], $id = "")
+    private function validateInput($payload = [], $id = "")
     {
-        return validator($data, [
+        return validator($payload, [
             'firstname' => 'required|string|max:60',
             'lastname' => 'required|string|max:60',
             'email' => 'required|email|max:100|unique:users,email,' . $id,
@@ -136,14 +153,59 @@ class UserController extends Controller
         ]);
     }
 
+    private function validateLoginInput($payload = [])
+    {
+        return validator($payload, [
+            'email' => 'required|email|max:100',
+            'password' => 'required|max:100|min:8',
+        ]);
+    }
+
     private function getUserById($id, $accountStatus = "active")
     {
         return User::ofType($accountStatus)->find($id);
     }
 
+    private function getUserByEmail($email, $accountStatus = "active")
+    {
+        return User::ofType($accountStatus)->where("email", $email)->first();
+    }
+
     private function getAllUser($accountStatus = "active")
     {
         return User::ofType($accountStatus)->get();
+    }
+
+    public function register(storeUserRequest $request)
+    {
+        try {
+            $request->validated($request->all());
+            $payload = $request->input();
+            // $validator = $this->validate();
+            // if ($validator->fails())
+            //     return $this->error($validator->errors(),  "All field required!", 400);
+
+            // hashing password
+            $payload['password'] = bcrypt($request->input('password'));
+
+            // creating User 
+            $user = User::create($payload);
+            $payload['id'] = $user->id;
+
+            // generating token
+            $payload['token'] = $user->createToken("access token {$payload['id']}", ['users:view'])->plainTextToken;
+            unset($payload['password']);
+
+            return $this->success($payload,  "User created successfully!", 201);
+        } catch (Throwable $th) {
+            dd($th);
+            return Response($this->payloadFormat(400, "Something went wrong", ["error" => $th]), 400);
+        }
+    }
+
+    public function logout(Request $request)
+    {
+        dd($request->user()->tokens()->delete());
     }
 
     /**
