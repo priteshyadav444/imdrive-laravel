@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\UserController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,19 +15,27 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::middleware('auth:sanctum')->get('/users', function (Request $request) {
-//     return $request->user();
-// });
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    // dd($request);
+    return $request->user();
+});
 
+// public routes
+Route::controller(UserController::class)->prefix("users")->group(function () {
+    Route::post("login",  'login')->name('login');
+    Route::post('register', 'register');
+});
 
-Route::prefix("users")->group(function () {
-    Route::get("/login", [UserController::class, 'login']);
-    Route::get("/", [UserController::class, 'index']);
-    Route::get("/{id}", [UserController::class, 'show']);
-    Route::post("/", [UserController::class, 'store']);
-    Route::put("/{id}", [UserController::class, 'update']);
-    Route::patch("/{id}", [UserController::class, 'update']);
-    Route::delete('/{id}', [UserController::class, 'destroy']);
-})->middleware("auth:api");
+// protectted routes
+Route::controller(UserController::class)->prefix("users")->middleware('auth:sanctum')->group(function () {
+    // protectted routes
+    Route::get("/",  'index');
+    Route::get("/{id}",  'show');
+    Route::post("/",  'store');
+    Route::put("/{id}",  'update');
+    Route::patch("/{id}",  'update');
+    Route::delete('logout',  'logout');
+    Route::delete('/{id}',  'destroy');
+});
 
 // Route::apiResource("users", UserController::class);
