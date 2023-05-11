@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Models\Master;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class TaskType extends Model
+{
+    use HasFactory;
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User\User;
+
 return [
 
     /*
@@ -40,6 +42,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'api' => [
+            'driver' => 'session',
+            'provider' => 'users',
+            'hash' => false,
+        ],
     ],
 
     /*
@@ -62,12 +70,12 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
-        ],
-
+            'model' => User::class,
+        ]
+        // ],
         // 'users' => [
         //     'driver' => 'database',
-        //     'table' => 'users',
+        //     'model' => "users",
         // ],
     ],
 
